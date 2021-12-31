@@ -441,6 +441,7 @@ const enumerableResponseKeys: (keyof Response)[] = [
   "status",
   "type",
 ];
+
 export class Response<
   WaitUntil extends any[] = unknown[]
 > extends Body<BaseResponse> {
@@ -562,6 +563,12 @@ export class Response<
     return this.#status ?? this[_kInner].status;
   }
 
+  get internalResponse(): any {
+    // @ts-expect-error
+    const state = this[_kInner][fetchSymbols.kState] as any;
+    return state.internalResponse;
+  }
+
   // Pass-through standard properties
   get ok(): boolean {
     return this[_kInner].ok;
@@ -632,7 +639,7 @@ export async function fetch(
   // response when attempting to make requests to sites behind Cloudflare
   req.headers.delete("cf-connecting-ip");
 
-  const baseRes = await baseFetch(req);
+  const baseRes = await baseFetch(req, { redirect: "manual" });
 
   // Increment the subrequest count by the number of redirects
   // TODO (someday): technically we should check the subrequest count before

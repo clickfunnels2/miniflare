@@ -178,6 +178,19 @@ export function createRequestListener<Plugins extends HTTPPluginSignatures>(
       try {
         response = await mf.dispatchFetch(request);
         waitUntil = response.waitUntil();
+        if (response.type == "opaqueredirect") {
+          const internalResponse = response.internalResponse;
+          const headers = new Headers();
+          for (let i = 0; i < internalResponse.headersList.length; i++) {
+            const key = internalResponse.headersList[i];
+            const value = internalResponse.headersList[++i];
+            headers.append(key, value);
+          }
+          internalResponse.headers = headers;
+          internalResponse.body = null;
+          response = internalResponse as Response;
+        }
+
         status = response.status;
         const headers: OutgoingHttpHeaders = {};
         // eslint-disable-next-line prefer-const
